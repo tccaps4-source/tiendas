@@ -176,6 +176,31 @@ régimen no lo recupera.
 En monotributo el ingreso neto es el precio completo y el costo sube 21% (ARS
 6.002 el antifaz), lo que deja el mismo markup pero mejor contribución.
 
+### El recargo de Shopify en Argentina
+
+**Shopify Payments no opera en Argentina.** Hay que cobrar con una pasarela
+externa (Mercado Pago), y Shopify cobra un recargo por transacción encima de la
+comisión del procesador: **2% en Basic, 1% en Shopify, 0,5% en Advanced**.
+
+| Producto | Tiendanube (6,49%) | Shopify Basic (8,49%) | Shopify plan medio (7,49%) |
+|---|---|---|---|
+| Antifaz Blackout 3D | 1,97x | **2,05x** | 2,01x |
+| Kit Apagón | 1,91x | 1,98x | 1,94x |
+| Tapones Silence | 2,11x | **2,20x** | 2,16x |
+
+*ROAS de equilibrio con envío gratis de ARS 3.500 netos.*
+
+En Shopify Basic con envío gratis, **el único producto que cierra es el Kit**.
+Es un argumento más para que el kit sea el producto que se empuja, y una razón
+para saltar a un plan superior apenas el volumen lo justifique: cada punto de
+recargo que bajás vuelve directo al margen.
+
+Para modelarlo:
+
+```bash
+node src/cli.ts pricing --payment-fee 0.0849   # Shopify Basic
+```
+
 ### El envío gratis: depende del régimen
 
 ROAS de equilibrio, con envío de ARS 3.500 netos:
