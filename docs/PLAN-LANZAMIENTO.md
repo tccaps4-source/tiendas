@@ -26,6 +26,35 @@ requieren más trabajo.
 
 ---
 
+## Fase 0 bis — Definir el régimen impositivo
+
+Antes de fijar precios, sabé bajo qué régimen vas a facturar. Cambia los números
+más que el tipo de cambio.
+
+**Monotributo** es el arranque natural: cuota mensual fija, Factura C, sin IVA
+que liquidar. Con el catálogo actual el ROAS de equilibrio queda entre 1,26x y
+1,56x, cómodo incluso regalando el envío.
+
+El límite es el **tope de facturación anual**: la categoría A son ARS 12.009.410,
+que con el antifaz a ARS 38.900 se llenan con unas 310 ventas. Si el producto
+anda, vas a recategorizar dos o tres veces antes de que termine el año — la
+recategorización es obligatoria en enero y julio.
+
+**Responsable inscripto** es donde terminás si escalás. Ahí el IVA de las
+compras sí es crédito fiscal, pero cobrás y remitís el 21%, y el ROAS de
+equilibrio sube a 1,64x–2,17x. Es el escenario que obliga a poner el envío
+gratis recién en el kit.
+
+```bash
+node src/cli.ts pricing --market AR --regimen monotributo
+node src/cli.ts pricing --market AR --regimen responsable-inscripto
+```
+
+> Esto es orientación para dimensionar el negocio, no asesoramiento contable.
+> Antes de inscribirte, confirmalo con un contador.
+
+---
+
 ## Fase 1 — Validar el producto antes de comprar stock
 
 **No compres 300 unidades todavía.** Este es el paso que se saltea todo el mundo
@@ -95,11 +124,12 @@ Los tres productos quedan cargados. Lo que falta configurar a mano en el panel:
   días te devuelven 3,6 puntos de margen.
 - **Envíos.** Los pesos ya están en el catálogo (85 g el antifaz, 215 g el kit),
   así que la cotización automática funciona apenas conectes el transportista.
-- **Envío gratis desde ARS 62.900**, o sea a partir del kit. No es una
-  preferencia estética: con envío absorbido el antifaz suelto queda en 2,02x de
-  ROAS de equilibrio y los tapones en 2,17x, los dos por encima del límite
-  sano. Los números están en
-  [`PRODUCTO-GANADOR.md`](PRODUCTO-GANADOR.md#el-envío-gratis-define-la-estrategia).
+- **Envío gratis: depende de tu régimen.** Si sos monotributista, podés
+  ofrecerlo desde el primer producto (el ROAS de equilibrio queda en 1,49x aun
+  absorbiéndolo). Si sos responsable inscripto, arrancalo en **ARS 62.900**, o
+  sea a partir del kit: con envío absorbido el antifaz suelto queda en 2,02x y
+  los tapones en 2,17x, los dos arriba del límite sano. Las dos columnas están
+  en [`PRODUCTO-GANADOR.md`](PRODUCTO-GANADOR.md#el-envío-gratis-depende-del-régimen).
 - **Pensá dos veces las cuotas sin interés.** Mueven la conversión en Argentina
   como ninguna otra palanca, pero el costo financiero lo absorbés vos: entre 7 y
   14 puntos adicionales de comisión. Antes de activarlas, corré

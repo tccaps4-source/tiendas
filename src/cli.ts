@@ -6,11 +6,14 @@ import { loadCatalog, findProduct } from './catalog/index.ts';
 import { ShopifyAdapter } from './adapters/shopify.ts';
 import { TiendanubeAdapter } from './adapters/tiendanube.ts';
 import {
+  AR_REGIMES,
+  AR_REGIME_NAMES,
   assumptionsFor,
   formatMoney,
   formatPct,
   resolvePricing,
   unitEconomics,
+  type ArRegime,
   type CostAssumptions,
 } from './pricing.ts';
 import { MARKETS, type Adapter, type Market, type Product } from './types.ts';
@@ -37,13 +40,14 @@ Opciones
   --cac <monto>           Costo de adquisición por cliente, para 'pricing'
   --shipping <monto>      Envío absorbido por pedido, para 'pricing'
   --payment-fee <tasa>    Comisión de la pasarela, ej. 0.0785, para 'pricing'
-                          (IVA e IIBB salen del mercado elegido)
+  --regimen <nombre>      Sólo para --market AR: monotributo | responsable-inscripto
+                          (por defecto: responsable-inscripto)
   --yes                   Publica sin pedir confirmación
   --help                  Muestra esta ayuda
 
 Ejemplos
   node src/cli.ts list
-  node src/cli.ts pricing --market AR --cac 6000 --shipping 3500
+  node src/cli.ts pricing --market AR --regimen monotributo --shipping 3500
   node src/cli.ts preview --platform tiendanube --product noctu-antifaz-blackout-3d
   node src/cli.ts publish --platform shopify --market US --yes
 `.trim();
@@ -83,6 +87,24 @@ function selectProducts(slug: string | undefined): Product[] {
   return slug ? [findProduct(slug)] : loadCatalog();
 }
 
+/**
+ * Resuelve el régimen impositivo argentino.
+ *
+ * Es específico de Argentina: en otros mercados el flag no aplica, y pasarlo
+ * ahí casi siempre significa que el usuario se equivocó de `--market`.
+ */
+function parseRegime(value: string | undefined, market: Market): Partial<CostAssumptions> {
+  if (value === undefined) return {};
+
+  if (market !== 'AR') {
+    throw new Error(`--regimen sólo aplica a --market AR, no a ${market}`);
+  }
+  if (!AR_REGIME_NAMES.includes(value as ArRegime)) {
+    throw new Error(`Régimen inválido: ${value}. Válidos: ${AR_REGIME_NAMES.join(', ')}`);
+  }
+  return AR_REGIMES[value as ArRegime];
+}
+
 function parseNumber(value: string | undefined, flag: string): number | undefined {
   if (value === undefined) return undefined;
   const parsed = Number(value);
@@ -111,12 +133,18 @@ function commandList(): void {
   console.log('Catálogo válido.');
 }
 
-function commandPricing(market: Market, assumptions: CostAssumptions, slug?: string): void {
+function commandPricing(
+  market: Market,
+  assumptions: CostAssumptions,
+  slug?: string,
+  regime?: string,
+): void {
   // Se resuelve el catálogo antes de imprimir nada, para que un slug inexistente
   // no deje media tabla en pantalla seguida de un error.
   const products = selectProducts(slug);
 
-  console.log(`Economía unitaria — mercado ${market}`);
+  const regimeLabel = market === 'AR' ? ` · ${regime ?? 'responsable-inscripto'}` : '';
+  console.log(`Economía unitaria — mercado ${market}${regimeLabel}`);
   console.log(
     `Supuestos: IVA ${formatPct(assumptions.salesTaxRate)} incluido en el precio · ` +
       `IIBB ${formatPct(assumptions.grossReceiptsTaxRate)} · ` +
@@ -124,8 +152,15 @@ function commandPricing(market: Market, assumptions: CostAssumptions, slug?: str
   );
   console.log(
     `           envío ${assumptions.shippingCost} · CAC ${assumptions.cac} · ` +
-      `devoluciones ${formatPct(assumptions.returnRate)}\n`,
+      `devoluciones ${formatPct(assumptions.returnRate)}`,
   );
+  if (assumptions.irrecoverableInputTaxRate > 0) {
+    console.log(
+      `           el IVA ${formatPct(assumptions.irrecoverableInputTaxRate)} de las compras ` +
+        `no es crédito fiscal, así que va al costo`,
+    );
+  }
+  console.log('');
 
   for (const product of products) {
     console.log(`  ${product.name}`);
@@ -270,6 +305,7 @@ async function main(): Promise<void> {
       cac: { type: 'string' },
       shipping: { type: 'string' },
       'payment-fee': { type: 'string' },
+      regimen: { type: 'string' },
       yes: { type: 'boolean', default: false },
       help: { type: 'boolean', default: false },
     },
@@ -298,7 +334,11 @@ async function main(): Promise<void> {
       if (shipping !== undefined) overrides.shippingCost = shipping;
       if (paymentFee !== undefined) overrides.paymentFeeRate = paymentFee;
 
-      return commandPricing(market, assumptionsFor(market, overrides), values.product);
+      const assumptions = assumptionsFor(market, {
+        ...parseRegime(values.regimen, market),
+        ...overrides,
+      });
+      return commandPricing(market, assumptions, values.product, values.regimen);
     }
 
     case 'preview':

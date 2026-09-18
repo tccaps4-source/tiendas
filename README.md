@@ -50,8 +50,20 @@ Los impuestos salen del mercado que elijas: para `AR` aplica **IVA 21% incluido
 en el precio**, **ingresos brutos 3%** y la comisión de **Mercado Pago 7,85%**.
 Eso importa más de lo que parece — el precio de góndola en LatAm es final al
 consumidor, así que el IVA se cobra pero no es ingreso, y contarlo como tal
-infla el margen un 17%. Con `--payment-fee`, `--shipping` y `--cac` pisás los
-supuestos que quieras.
+infla el margen un 17%.
+
+En Argentina, además, elegí el régimen con `--regimen`:
+
+```bash
+node src/cli.ts pricing --market AR --regimen monotributo
+```
+
+El monotributista no discrimina IVA en la venta (Factura C), pero tampoco
+recupera el de las compras, así que ese 21% se le va al costo. El markup
+termina igual en los dos regímenes; lo que cambia es la contribución, porque la
+comisión de la pasarela y el IIBB se calculan sobre el total facturado.
+
+Con `--payment-fee`, `--shipping` y `--cac` pisás cualquier supuesto.
 
 Como referencia: **markup de 3x o más** y **ROAS de equilibrio de 2x o menos**
 es el piso para que un producto aguante tráfico pago.
@@ -129,6 +141,7 @@ Opciones comunes:
 | `--platform shopify\|tiendanube` | Una sola plataforma. Por defecto, todas las que tengan credenciales. |
 | `--product <slug>` | Un solo producto. Por defecto, todo el catálogo. |
 | `--market AR\|MX\|CO\|CL\|UY\|BR\|US` | Qué precios e impuestos usar. Por defecto `US`. |
+| `--regimen monotributo\|responsable-inscripto` | Régimen impositivo, sólo con `--market AR`. |
 | `--cac`, `--shipping`, `--payment-fee` | Pisan los supuestos de `pricing`. |
 | `--yes` | Publicar sin confirmación interactiva. |
 

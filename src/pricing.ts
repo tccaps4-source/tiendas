@@ -62,6 +62,16 @@ export interface CostAssumptions {
    * en Estados Unidos.
    */
   salesTaxRate: number;
+  /**
+   * IVA pagado al comprar la mercadería que NO se puede recuperar como crédito
+   * fiscal, y que por lo tanto es costo.
+   *
+   * Un responsable inscripto lo descuenta contra el IVA que cobra, así que acá
+   * va 0. Un monotributista no: con Factura C no discrimina IVA en la venta,
+   * pero el que pagó en la compra lo pierde. Para él va la alícuota de la
+   * jurisdicción.
+   */
+  irrecoverableInputTaxRate: number;
   /** Impuesto sobre los ingresos brutos (IIBB en Argentina), sobre el precio final. */
   grossReceiptsTaxRate: number;
   /** Costo de envío absorbido por la tienda, por pedido, en la moneda del precio. */
@@ -76,6 +86,7 @@ export interface CostAssumptions {
 export const DEFAULT_ASSUMPTIONS: CostAssumptions = {
   paymentFeeRate: 0.064,
   salesTaxRate: 0,
+  irrecoverableInputTaxRate: 0,
   grossReceiptsTaxRate: 0,
   shippingCost: 0,
   cac: 0,
@@ -101,6 +112,26 @@ export const MARKET_ASSUMPTIONS: Partial<Record<Market, Partial<CostAssumptions>
   // En Estados Unidos el sales tax se agrega en el checkout, no viene incluido.
   US: { salesTaxRate: 0 },
 };
+
+/**
+ * Regímenes impositivos argentinos. Cambian el resultado más que el tipo de
+ * cambio, así que conviene elegir el que corresponde antes de mirar el margen.
+ *
+ * - **Responsable inscripto**: cobra IVA dentro del precio y lo remite, pero el
+ *   IVA de las compras es crédito fiscal, así que el costo va neto.
+ * - **Monotributo**: con Factura C no discrimina IVA, así que todo el precio es
+ *   ingreso. A cambio pierde el IVA de las compras, que pasa a ser costo. Paga
+ *   además una cuota mensual fija que no depende de las ventas y que por eso no
+ *   se modela acá: es costo de estructura, no costo por unidad.
+ */
+export const AR_REGIMES = {
+  'responsable-inscripto': { salesTaxRate: 0.21, irrecoverableInputTaxRate: 0 },
+  monotributo: { salesTaxRate: 0, irrecoverableInputTaxRate: 0.21, grossReceiptsTaxRate: 0 },
+} as const satisfies Record<string, Partial<CostAssumptions>>;
+
+export type ArRegime = keyof typeof AR_REGIMES;
+
+export const AR_REGIME_NAMES = Object.keys(AR_REGIMES) as ArRegime[];
 
 /** Combina los valores por defecto, los del mercado y los que pase el usuario. */
 export function assumptionsFor(
@@ -142,11 +173,15 @@ export function unitEconomics(
   pricing: Pricing,
   assumptions: CostAssumptions = DEFAULT_ASSUMPTIONS,
 ): UnitEconomics {
-  const { price, cost, currency } = pricing;
+  const { price, currency } = pricing;
 
   // El precio mostrado lleva el IVA adentro: se cobra pero no es ingreso.
   const netRevenue = price / (1 + assumptions.salesTaxRate);
   const salesTax = price - netRevenue;
+
+  // El IVA de la compra que no se puede computar como crédito fiscal engrosa
+  // el costo de la mercadería.
+  const cost = pricing.cost * (1 + assumptions.irrecoverableInputTaxRate);
 
   // La pasarela y el impuesto a los ingresos brutos se calculan sobre el total
   // que pasa por la caja, IVA incluido.

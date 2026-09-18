@@ -2,7 +2,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { ShopifyAdapter } from './shopify.ts';
 import { TiendanubeAdapter } from './tiendanube.ts';
-import { unitEconomics, resolvePricing, assumptionsFor } from '../pricing.ts';
+import { unitEconomics, resolvePricing, assumptionsFor, AR_REGIMES } from '../pricing.ts';
 import { loadCatalog, findProduct } from '../catalog/index.ts';
 import type { Product } from '../types.ts';
 
@@ -95,6 +95,7 @@ describe('unitEconomics', () => {
   const sinImpuestos = {
     paymentFeeRate: 0,
     salesTaxRate: 0,
+    irrecoverableInputTaxRate: 0,
     grossReceiptsTaxRate: 0,
     shippingCost: 0,
     cac: 0,
@@ -167,6 +168,41 @@ describe('unitEconomics', () => {
 
     assert.equal(e.contribution, 79);
     assert.equal(Math.round((121 / 79) * 100) / 100, Math.round(e.breakEvenRoas * 100) / 100);
+  });
+});
+
+describe('regímenes impositivos argentinos', () => {
+  const precio = { currency: 'ARS', price: 38900, cost: 4960 };
+
+  test('responsable inscripto: cobra IVA y recupera el de las compras', () => {
+    const e = unitEconomics(precio, assumptionsFor('AR', AR_REGIMES['responsable-inscripto']));
+
+    assert.equal(Math.round(e.netRevenue), 32149);
+    assert.equal(e.cost, 4960);
+  });
+
+  test('monotributo: todo el precio es ingreso, pero el IVA de la compra es costo', () => {
+    const e = unitEconomics(precio, assumptionsFor('AR', AR_REGIMES.monotributo));
+
+    // Factura C no discrimina IVA: no hay nada que remitir.
+    assert.equal(e.netRevenue, 38900);
+    assert.equal(e.salesTax, 0);
+    // El IVA pagado al comprar se pierde y engrosa el costo.
+    assert.equal(Math.round(e.cost), Math.round(4960 * 1.21));
+  });
+
+  test('monotributo deja más margen que responsable inscripto al mismo precio', () => {
+    const inscripto = unitEconomics(precio, assumptionsFor('AR', AR_REGIMES['responsable-inscripto']));
+    const mono = unitEconomics(precio, assumptionsFor('AR', AR_REGIMES.monotributo));
+
+    assert.ok(mono.contribution > inscripto.contribution);
+    assert.ok(mono.breakEvenRoas < inscripto.breakEvenRoas);
+  });
+
+  test('el régimen se puede combinar con otros supuestos', () => {
+    const a = assumptionsFor('AR', { ...AR_REGIMES.monotributo, shippingCost: 3500 });
+    assert.equal(a.salesTaxRate, 0);
+    assert.equal(a.shippingCost, 3500);
   });
 });
 

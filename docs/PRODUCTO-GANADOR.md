@@ -131,45 +131,74 @@ Este es el mercado real del proyecto, así que va aparte y con los costos locale
 puestos. Precios anclados a **ARS 1.550 por dólar** (blue 1.540/1.560 y MEP
 1.534 al 17 de septiembre de 2026).
 
-El cálculo descuenta lo que en Argentina se lleva una parte grande de cada venta
-y que es fácil pasar por alto:
+### Primero: qué régimen impositivo tenés
 
-- **IVA 21% ya incluido en el precio.** El precio de góndola es final al
-  consumidor, así que de ARS 38.900 sólo **ARS 32.149 son ingreso**. El resto se
-  le debe al fisco. Ignorarlo infla el margen un 17%.
-- **Ingresos brutos 3%** sobre el total facturado.
-- **Mercado Pago 7,85%** — Checkout Pro con acreditación inmediata, 6,49% más el
-  IVA sobre la comisión.
+Esto cambia el resultado más que el tipo de cambio, así que va antes que
+cualquier tabla.
 
-| SKU | Precio final | Ingreso neto | Costo | Markup | Margen bruto |
+| | Responsable inscripto | Monotributo |
+|---|---|---|
+| IVA en la venta | 21% incluido en el precio, se remite | No discrimina (Factura C): todo es ingreso |
+| IVA de las compras | Crédito fiscal, el costo va neto | **No se recupera: es costo** |
+| Ingresos brutos | 3% sobre lo facturado | Régimen simplificado: monto fijo |
+| Costo fijo | — | Cuota mensual de ARCA |
+
+Los dos se compensan parcialmente: el monotributista no paga IVA sobre la venta
+pero sí lo pierde en la compra. El markup y el margen bruto terminan siendo
+**idénticos** (6,5x y 84,6% en el antifaz). Lo que cambia es todo lo demás,
+porque la comisión de Mercado Pago y el IIBB se calculan sobre el total
+facturado, y ahí el inscripto está entregando IVA además.
+
+Elegí el tuyo al correr los números:
+
+```bash
+node src/cli.ts pricing --market AR --regimen monotributo
+node src/cli.ts pricing --market AR --regimen responsable-inscripto
+```
+
+### Los precios
+
+Con **IVA 21%**, **ingresos brutos 3%** y **Mercado Pago 7,85%** (Checkout Pro
+con acreditación inmediata: 6,49% más el IVA sobre la comisión).
+
+| SKU | Precio final | Ingreso neto (RI) | Costo (RI) | Markup | Margen bruto |
 |---|---|---|---|---|---|
 | Antifaz Blackout 3D | ARS 38.900 | ARS 32.149 | ARS 4.960 | 6,5x | 84,6% |
 | Kit Apagón | ARS 62.900 | ARS 51.983 | ARS 9.150 | 5,7x | 82,4% |
 | Tapones Silence | ARS 23.900 | ARS 19.752 | ARS 2.480 | 8,0x | 87,4% |
 
-### El envío gratis define la estrategia
+En monotributo el ingreso neto es el precio completo y el costo sube 21% (ARS
+6.002 el antifaz), lo que deja el mismo markup pero mejor contribución.
 
-El ROAS de equilibrio cambia por completo según quién paga el envío (ARS 3.500):
+### El envío gratis: depende del régimen
 
-| SKU | Envío lo paga el comprador | Envío gratis absorbido |
-|---|---|---|
-| Antifaz Blackout 3D | 1,70x | **2,02x** |
-| Kit Apagón | 1,76x | 1,96x |
-| Tapones Silence | 1,64x | **2,17x** |
+ROAS de equilibrio, con envío de ARS 3.500:
 
-Absorber el envío en el antifaz suelto lo deja justo **arriba del límite de 2x**,
-y en los tapones lo rompe. La conclusión es concreta:
+| SKU | RI, cobra envío | RI, envío gratis | Mono, cobra envío | Mono, envío gratis |
+|---|---|---|---|---|
+| Antifaz Blackout 3D | 1,70x | **2,02x** | 1,31x | 1,49x |
+| Kit Apagón | 1,76x | 1,96x | 1,35x | 1,46x |
+| Tapones Silence | 1,64x | **2,17x** | 1,26x | 1,56x |
 
-> **El envío gratis arranca en el Kit, no antes.** Poné el umbral en ARS 62.900.
-> El antifaz suelto y los tapones cobran envío.
+**Si sos responsable inscripto:** absorber el envío deja el antifaz suelto justo
+arriba del límite de 2x y rompe los tapones.
 
-Eso hace dos cosas a la vez: mantiene el ROAS de equilibrio cómodo en todo el
-catálogo y convierte el envío gratis en el argumento que empuja del antifaz de
-ARS 38.900 al kit de ARS 62.900.
+> **El envío gratis arranca en el Kit.** Poné el umbral en ARS 62.900; el antifaz
+> suelto y los tapones cobran envío. Además de proteger el margen, convierte el
+> envío gratis en el gancho que empuja del antifaz al kit.
+>
+> Si igual lo querés en el antifaz suelto, el precio tiene que subir a **ARS
+> 42.900** para volver a 1,94x. Se puede, pero perdés el gancho.
 
-Si aun así querés envío gratis en el antifaz suelto, el precio tiene que subir a
-**ARS 42.900** para volver a 1,94x. Se puede, pero perdés el gancho que sube el
-ticket.
+**Si sos monotributista:** todo el catálogo queda cómodo aun con envío gratis
+(1,46x a 1,56x). Podés ofrecerlo desde el primer producto sin romper nada, y el
+umbral pasa a ser una decisión de marketing y no de supervivencia.
+
+Ojo con una cosa que el cálculo por unidad no muestra: el monotributo tiene
+**tope de facturación anual**. Con el antifaz a ARS 38.900, la categoría A
+(ARS 12.009.410 al año) se llena con unas 310 ventas. Si el producto funciona,
+vas a recategorizar rápido, y en algún momento pasar a responsable inscripto —
+que es justo el escenario de la columna RI.
 
 ---
 
