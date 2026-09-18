@@ -26,32 +26,26 @@ requieren más trabajo.
 
 ---
 
-## Fase 0 bis — Definir el régimen impositivo
+## Fase 0 bis — El régimen ya está definido
 
-Antes de fijar precios, sabé bajo qué régimen vas a facturar. Cambia los números
-más que el tipo de cambio.
+Esta tienda factura como **responsable inscripto**, que es el supuesto por
+defecto de todos los comandos. El ROAS de equilibrio queda entre 1,60x y 1,72x
+cobrando el envío.
 
-**Monotributo** es el arranque natural: cuota mensual fija, Factura C, sin IVA
-que liquidar. Con el catálogo actual el ROAS de equilibrio queda entre 1,26x y
-1,56x, cómodo incluso regalando el envío.
+Ser inscripto tiene una ventaja que conviene aprovechar desde el primer día: el
+IVA de **todo** lo que comprás es crédito fiscal. La mercadería, la comisión de
+Mercado Pago, el envío, el hosting, la publicidad facturada en el país. Pedí
+factura A de todo, siempre.
 
-El límite es el **tope de facturación anual**: la categoría A son ARS 12.009.410,
-que con el antifaz a ARS 38.900 se llenan con unas 310 ventas. Si el producto
-anda, vas a recategorizar dos o tres veces antes de que termine el año — la
-recategorización es obligatoria en enero y julio.
-
-**Responsable inscripto** es donde terminás si escalás. Ahí el IVA de las
-compras sí es crédito fiscal, pero cobrás y remitís el 21%, y el ROAS de
-equilibrio sube a 1,64x–2,17x. Es el escenario que obliga a poner el envío
-gratis recién en el kit.
+Por eso los costos del catálogo van **netos de IVA**, y por eso la comisión de
+Mercado Pago figura como 6,49% y no como el 7,85% que ves en el resumen.
 
 ```bash
-node src/cli.ts pricing --market AR --regimen monotributo
-node src/cli.ts pricing --market AR --regimen responsable-inscripto
+node src/cli.ts pricing              # responsable inscripto, mercado AR
 ```
 
 > Esto es orientación para dimensionar el negocio, no asesoramiento contable.
-> Antes de inscribirte, confirmalo con un contador.
+> Confirmá las alícuotas con tu contador, sobre todo el IIBB de tu provincia.
 
 ---
 
@@ -72,7 +66,7 @@ y es el que separa perder USD 200 de perder USD 3.000.
    puestos en tu depósito. Con ese número corré:
 
    ```bash
-   node src/cli.ts pricing --market AR
+   node src/cli.ts pricing
    ```
 
    Si el markup quedó abajo de 3x, o subís el precio o cambiás de proveedor.
@@ -114,26 +108,30 @@ una toma.
 ```bash
 cp .env.example .env     # completá las credenciales
 node src/cli.ts ping     # confirmá que conectó
-node src/cli.ts publish --market AR
+node src/cli.ts publish
 ```
 
 Los tres productos quedan cargados. Lo que falta configurar a mano en el panel:
 
 - **Medios de pago.** Mercado Pago. Ojo con el plazo de acreditación: inmediata
-  cuesta 7,85% y a 14 días cerca de 4,2%. Si tu flujo de caja lo aguanta, los 14
-  días te devuelven 3,6 puntos de margen.
+  cuesta 6,49% neto y a 14 días cerca de 3,49%. Si tu flujo de caja lo aguanta,
+  los 14 días te devuelven 3 puntos de margen.
+- **Pedí factura A de todo.** Como inscripto recuperás el IVA de la mercadería,
+  el envío, la comisión y las herramientas. Es margen que se pierde por no
+  pedir el comprobante correcto.
 - **Envíos.** Los pesos ya están en el catálogo (85 g el antifaz, 215 g el kit),
   así que la cotización automática funciona apenas conectes el transportista.
-- **Envío gratis: depende de tu régimen.** Si sos monotributista, podés
-  ofrecerlo desde el primer producto (el ROAS de equilibrio queda en 1,49x aun
-  absorbiéndolo). Si sos responsable inscripto, arrancalo en **ARS 62.900**, o
-  sea a partir del kit: con envío absorbido el antifaz suelto queda en 2,02x y
-  los tapones en 2,17x, los dos arriba del límite sano. Las dos columnas están
-  en [`PRODUCTO-GANADOR.md`](PRODUCTO-GANADOR.md#el-envío-gratis-depende-del-régimen).
+- **Envío gratis desde ARS 38.900, sólo AMBA.** El antifaz y el kit viajan
+  gratis en el área metropolitana; al interior se cobra, y los tapones sueltos
+  cobran siempre. El motivo es el margen: regalar el envío del antifaz cierra
+  hasta un costo de despacho de ARS 3.900 netos, y de ahí para arriba se rompe.
+  La tabla de sensibilidad está en
+  [`PRODUCTO-GANADOR.md`](PRODUCTO-GANADOR.md#el-envío-gratis-depende-del-régimen).
+  Si preferís una sola regla nacional, subí el umbral al kit (ARS 62.900).
 - **Pensá dos veces las cuotas sin interés.** Mueven la conversión en Argentina
   como ninguna otra palanca, pero el costo financiero lo absorbés vos: entre 7 y
   14 puntos adicionales de comisión. Antes de activarlas, corré
-  `pricing --market AR --payment-fee 0.18` y mirá si el número todavía cierra.
+  `pricing --payment-fee 0.16` y mirá si el número todavía cierra.
 - **Página "Cómo elegir tu antifaz"** comparando plano vs. 3D. Capta búsquedas
   informativas y es la página a la que mandar el tráfico frío.
 
@@ -158,7 +156,7 @@ Audiencias por dolor concreto, no por interés genérico:
 **Cuándo escalar.** Mirá tu ROAS de equilibrio:
 
 ```bash
-node src/cli.ts pricing --market AR --cac <lo que gastaste / ventas>
+node src/cli.ts pricing --cac <lo que gastaste / ventas>
 ```
 
 Si el ROAS real supera al de equilibrio de forma sostenida durante una semana,

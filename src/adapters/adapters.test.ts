@@ -199,6 +199,25 @@ describe('regímenes impositivos argentinos', () => {
     assert.ok(mono.breakEvenRoas < inscripto.breakEvenRoas);
   });
 
+  test('el IVA sobre la comisión es crédito fiscal para el inscripto', () => {
+    const base = { ...assumptionsFor('AR'), shippingCost: 0 };
+    const ri = unitEconomics(precio, { ...base, ...AR_REGIMES['responsable-inscripto'] });
+    const mono = unitEconomics(precio, { ...base, ...AR_REGIMES.monotributo });
+
+    // El inscripto paga la comisión neta; el monotributista, con IVA encima.
+    assert.equal(Math.round(ri.paymentFee), Math.round(38900 * 0.0649));
+    assert.equal(Math.round(mono.paymentFee), Math.round(38900 * 0.0649 * 1.21));
+  });
+
+  test('el envío también carga el IVA que no se recupera', () => {
+    const base = { ...assumptionsFor('AR'), shippingCost: 3500, returnRate: 0 };
+    const ri = unitEconomics(precio, { ...base, ...AR_REGIMES['responsable-inscripto'] });
+    const mono = unitEconomics(precio, { ...base, ...AR_REGIMES.monotributo });
+
+    assert.equal(ri.shippingCost, 3500);
+    assert.equal(Math.round(mono.shippingCost), Math.round(3500 * 1.21));
+  });
+
   test('el régimen se puede combinar con otros supuestos', () => {
     const a = assumptionsFor('AR', { ...AR_REGIMES.monotributo, shippingCost: 3500 });
     assert.equal(a.salesTaxRate, 0);
@@ -213,10 +232,11 @@ describe('assumptionsFor', () => {
     assert.equal(assumptionsFor('US').salesTaxRate, 0);
   });
 
-  test('Argentina trae además IIBB y la comisión de Mercado Pago', () => {
+  test('Argentina trae además IIBB y la comisión neta de Mercado Pago', () => {
     const ar = assumptionsFor('AR');
     assert.equal(ar.grossReceiptsTaxRate, 0.03);
-    assert.equal(ar.paymentFeeRate, 0.0785);
+    // 6,49% neto: el IVA sobre la comisión lo agrega el régimen, no esta tabla.
+    assert.equal(ar.paymentFeeRate, 0.0649);
   });
 
   test('lo que pasa el usuario pisa al mercado', () => {

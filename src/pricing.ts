@@ -51,7 +51,13 @@ export function resolvePricing(product: Product, variant: Variant, market: Marke
 
 /** Supuestos de costos variables, como fracción del precio de venta o monto fijo. */
 export interface CostAssumptions {
-  /** Comisión de la pasarela de pago (Mercado Pago, Shopify Payments...). */
+  /**
+   * Comisión de la pasarela de pago, **neta de IVA**.
+   *
+   * Mercado Pago publica 6,49% + IVA: acá va 0.0649. El IVA se agrega solo
+   * según `irrecoverableInputTaxRate`, porque para un responsable inscripto es
+   * crédito fiscal y para un monotributista es costo.
+   */
   paymentFeeRate: number;
   /**
    * IVA ya incluido en el precio mostrado.
@@ -66,15 +72,21 @@ export interface CostAssumptions {
    * IVA pagado al comprar la mercadería que NO se puede recuperar como crédito
    * fiscal, y que por lo tanto es costo.
    *
-   * Un responsable inscripto lo descuenta contra el IVA que cobra, así que acá
+   * Se aplica a todos los insumos que el modelo conoce: la mercadería, la
+   * comisión de la pasarela y el envío.
+   *
+   * Un responsable inscripto los descuenta contra el IVA que cobra, así que acá
    * va 0. Un monotributista no: con Factura C no discrimina IVA en la venta,
-   * pero el que pagó en la compra lo pierde. Para él va la alícuota de la
+   * pero el que pagó en cada compra lo pierde. Para él va la alícuota de la
    * jurisdicción.
    */
   irrecoverableInputTaxRate: number;
   /** Impuesto sobre los ingresos brutos (IIBB en Argentina), sobre el precio final. */
   grossReceiptsTaxRate: number;
-  /** Costo de envío absorbido por la tienda, por pedido, en la moneda del precio. */
+  /**
+   * Costo de envío absorbido por la tienda, por pedido, **neto de IVA**.
+   * Igual que la comisión, se le agrega el IVA no recuperable del régimen.
+   */
   shippingCost: number;
   /** Costo de adquisición por cliente (publicidad / CPA). */
   cac: number;
@@ -98,12 +110,13 @@ export const DEFAULT_ASSUMPTIONS: CostAssumptions = {
  *
  * Las alícuotas de IVA son datos públicos y estables. La comisión de pasarela
  * sólo está calibrada para Argentina (Mercado Pago Checkout Pro con
- * acreditación inmediata, 6,49% + IVA sobre la comisión); en el resto de los
- * mercados queda el valor genérico y conviene reemplazarlo con `--payment-fee`
- * por el que te cobre tu pasarela.
+ * acreditación inmediata); en el resto de los mercados queda el valor genérico
+ * y conviene reemplazarlo con `--payment-fee` por el que te cobre tu pasarela,
+ * siempre neto de IVA.
  */
 export const MARKET_ASSUMPTIONS: Partial<Record<Market, Partial<CostAssumptions>>> = {
-  AR: { salesTaxRate: 0.21, grossReceiptsTaxRate: 0.03, paymentFeeRate: 0.0785 },
+  // Mercado Pago Checkout Pro con acreditación inmediata: 6,49% neto de IVA.
+  AR: { salesTaxRate: 0.21, grossReceiptsTaxRate: 0.03, paymentFeeRate: 0.0649 },
   MX: { salesTaxRate: 0.16 },
   CO: { salesTaxRate: 0.19 },
   CL: { salesTaxRate: 0.19 },
@@ -179,22 +192,23 @@ export function unitEconomics(
   const netRevenue = price / (1 + assumptions.salesTaxRate);
   const salesTax = price - netRevenue;
 
-  // El IVA de la compra que no se puede computar como crédito fiscal engrosa
-  // el costo de la mercadería.
-  const cost = pricing.cost * (1 + assumptions.irrecoverableInputTaxRate);
+  // El IVA de los insumos que no se puede computar como crédito fiscal deja de
+  // ser un impuesto y pasa a ser, lisa y llanamente, más caro todo.
+  const inputTax = 1 + assumptions.irrecoverableInputTaxRate;
+  const cost = pricing.cost * inputTax;
+  const shippingCost = assumptions.shippingCost * inputTax;
 
   // La pasarela y el impuesto a los ingresos brutos se calculan sobre el total
   // que pasa por la caja, IVA incluido.
-  const paymentFee = price * assumptions.paymentFeeRate;
+  const paymentFee = price * assumptions.paymentFeeRate * inputTax;
   const grossReceiptsTax = price * assumptions.grossReceiptsTaxRate;
 
   // Una devolución pierde el costo del producto y el envío; el fee de la
   // pasarela normalmente se reintegra, así que no se cuenta acá.
-  const returnLoss = assumptions.returnRate * (cost + assumptions.shippingCost);
+  const returnLoss = assumptions.returnRate * (cost + shippingCost);
 
   const grossProfit = netRevenue - cost;
-  const contribution =
-    grossProfit - paymentFee - grossReceiptsTax - assumptions.shippingCost - returnLoss;
+  const contribution = grossProfit - paymentFee - grossReceiptsTax - shippingCost - returnLoss;
   const netProfit = contribution - assumptions.cac;
 
   return {
@@ -205,7 +219,7 @@ export function unitEconomics(
     salesTax,
     grossReceiptsTax,
     paymentFee,
-    shippingCost: assumptions.shippingCost,
+    shippingCost,
     cac: assumptions.cac,
     returnLoss,
     grossProfit,

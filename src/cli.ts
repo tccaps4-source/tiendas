@@ -21,6 +21,9 @@ import { MARKETS, type Adapter, type Market, type Product } from './types.ts';
 const PLATFORMS = ['shopify', 'tiendanube'] as const;
 type Platform = (typeof PLATFORMS)[number];
 
+/** El proyecto vende en Argentina, así que ese es el mercado por defecto. */
+const DEFAULT_MARKET: Market = 'AR';
+
 const USAGE = `
 tiendas — publica el catálogo en Shopify y/o Tiendanube
 
@@ -36,9 +39,9 @@ Comandos
 Opciones
   --platform <nombre>     shopify | tiendanube  (por defecto: las que tengan credenciales)
   --product <slug>        Un solo producto     (por defecto: todo el catálogo)
-  --market <código>       ${MARKETS.join(' | ')}   (por defecto: US)
+  --market <código>       ${MARKETS.join(' | ')}   (por defecto: ${DEFAULT_MARKET})
   --cac <monto>           Costo de adquisición por cliente, para 'pricing'
-  --shipping <monto>      Envío absorbido por pedido, para 'pricing'
+  --shipping <monto>      Envío absorbido por pedido, neto de IVA, para 'pricing'
   --payment-fee <tasa>    Comisión de la pasarela, ej. 0.0785, para 'pricing'
   --regimen <nombre>      Sólo para --market AR: monotributo | responsable-inscripto
                           (por defecto: responsable-inscripto)
@@ -49,11 +52,11 @@ Ejemplos
   node src/cli.ts list
   node src/cli.ts pricing --market AR --regimen monotributo --shipping 3500
   node src/cli.ts preview --platform tiendanube --product noctu-antifaz-blackout-3d
-  node src/cli.ts publish --platform shopify --market US --yes
+  node src/cli.ts publish --platform tiendanube --yes
 `.trim();
 
 function parseMarket(value: string | undefined): Market {
-  const market = (value ?? 'US').toUpperCase() as Market;
+  const market = (value ?? DEFAULT_MARKET).toUpperCase() as Market;
   if (!MARKETS.includes(market)) {
     throw new Error(`Mercado inválido: ${value}. Válidos: ${MARKETS.join(', ')}`);
   }

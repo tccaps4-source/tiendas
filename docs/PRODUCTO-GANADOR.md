@@ -120,7 +120,7 @@ la sección siguiente.
 Recalculá para tu mercado y tus costos reales:
 
 ```bash
-node src/cli.ts pricing --market AR --cac 6000 --shipping 3500
+node src/cli.ts pricing --cac 6000 --shipping 3500
 ```
 
 ---
@@ -131,10 +131,10 @@ Este es el mercado real del proyecto, así que va aparte y con los costos locale
 puestos. Precios anclados a **ARS 1.550 por dólar** (blue 1.540/1.560 y MEP
 1.534 al 17 de septiembre de 2026).
 
-### Primero: qué régimen impositivo tenés
+> **Este proyecto factura como responsable inscripto.** Las columnas de
+> monotributo quedan como referencia, por si el régimen cambia.
 
-Esto cambia el resultado más que el tipo de cambio, así que va antes que
-cualquier tabla.
+### El régimen impositivo importa más que el tipo de cambio
 
 | | Responsable inscripto | Monotributo |
 |---|---|---|
@@ -152,14 +152,20 @@ facturado, y ahí el inscripto está entregando IVA además.
 Elegí el tuyo al correr los números:
 
 ```bash
-node src/cli.ts pricing --market AR --regimen monotributo
-node src/cli.ts pricing --market AR --regimen responsable-inscripto
+node src/cli.ts pricing                        # responsable inscripto
+node src/cli.ts pricing --regimen monotributo  # comparación
 ```
 
 ### Los precios
 
-Con **IVA 21%**, **ingresos brutos 3%** y **Mercado Pago 7,85%** (Checkout Pro
-con acreditación inmediata: 6,49% más el IVA sobre la comisión).
+Con **IVA 21%**, **ingresos brutos 3%** y **Mercado Pago 6,49%** (Checkout Pro
+con acreditación inmediata, neto de IVA).
+
+Ese 6,49% y no 7,85% es la comisión real para un responsable inscripto: Mercado
+Pago factura 6,49% + IVA, y ese IVA es crédito fiscal como cualquier otro. Lo
+mismo vale para el envío y la mercadería, así que en el catálogo **todos los
+costos van netos de IVA** y el modelo les suma el impuesto sólo cuando el
+régimen no lo recupera.
 
 | SKU | Precio final | Ingreso neto (RI) | Costo (RI) | Markup | Margen bruto |
 |---|---|---|---|---|---|
@@ -172,33 +178,38 @@ En monotributo el ingreso neto es el precio completo y el costo sube 21% (ARS
 
 ### El envío gratis: depende del régimen
 
-ROAS de equilibrio, con envío de ARS 3.500:
+ROAS de equilibrio, con envío de ARS 3.500 netos:
 
 | SKU | RI, cobra envío | RI, envío gratis | Mono, cobra envío | Mono, envío gratis |
 |---|---|---|---|---|
-| Antifaz Blackout 3D | 1,70x | **2,02x** | 1,31x | 1,49x |
-| Kit Apagón | 1,76x | 1,96x | 1,35x | 1,46x |
-| Tapones Silence | 1,64x | **2,17x** | 1,26x | 1,56x |
+| Antifaz Blackout 3D | 1,67x | 1,97x | 1,31x | 1,49x |
+| Kit Apagón | 1,72x | 1,91x | 1,35x | 1,46x |
+| Tapones Silence | 1,60x | **2,11x** | 1,26x | 1,56x |
 
-**Si sos responsable inscripto:** absorber el envío deja el antifaz suelto justo
-arriba del límite de 2x y rompe los tapones.
+Como responsable inscripto, el antifaz aguanta el envío gratis (1,97x) pero los
+tapones no (2,11x). Y ese 1,97x es frágil: depende de cuánto salga el envío.
 
-> **El envío gratis arranca en el Kit.** Poné el umbral en ARS 62.900; el antifaz
-> suelto y los tapones cobran envío. Además de proteger el margen, convierte el
-> envío gratis en el gancho que empuja del antifaz al kit.
+| Envío neto por pedido | ROAS de equilibrio del antifaz |
+|---|---|
+| ARS 3.000 | 1,92x |
+| ARS 3.500 | 1,97x |
+| **ARS 4.000** | **2,02x** |
+| ARS 5.000 | 2,14x |
+
+**El punto de quiebre está en ARS 3.900.** Arriba de eso, regalar el envío del
+antifaz deja de cerrar. Un despacho a AMBA entra cómodo; uno al interior, no.
+
+> **Envío gratis desde ARS 38.900, sólo AMBA.** El antifaz y el kit viajan
+> gratis en el área metropolitana, que es donde el envío entra en el
+> presupuesto. Al interior se cobra. Los tapones sueltos cobran siempre.
 >
-> Si igual lo querés en el antifaz suelto, el precio tiene que subir a **ARS
-> 42.900** para volver a 1,94x. Se puede, pero perdés el gancho.
+> Si preferís una sola regla para todo el país, subí el umbral al kit
+> (ARS 62.900): ahí el margen aguanta cualquier destino.
 
-**Si sos monotributista:** todo el catálogo queda cómodo aun con envío gratis
-(1,46x a 1,56x). Podés ofrecerlo desde el primer producto sin romper nada, y el
-umbral pasa a ser una decisión de marketing y no de supervivencia.
-
-Ojo con una cosa que el cálculo por unidad no muestra: el monotributo tiene
-**tope de facturación anual**. Con el antifaz a ARS 38.900, la categoría A
-(ARS 12.009.410 al año) se llena con unas 310 ventas. Si el producto funciona,
-vas a recategorizar rápido, y en algún momento pasar a responsable inscripto —
-que es justo el escenario de la columna RI.
+**Como referencia, en monotributo** todo el catálogo queda cómodo aun con envío
+gratis (1,46x a 1,56x), porque no se entrega IVA sobre la venta. El límite ahí es
+otro: el **tope de facturación anual** — la categoría A son ARS 12.009.410, que
+con el antifaz a ARS 38.900 se llenan con unas 310 ventas.
 
 ---
 
@@ -212,24 +223,29 @@ chequearlos antes de poner plata.
    impuestos incluidos antes de fijar el precio.
 2. **Los precios de Argentina están a ARS 1.550 por dólar**, verificado el 17 de
    septiembre de 2026. Con la inflación y el tipo de cambio argentinos esto
-   envejece rápido: `node src/cli.ts pricing --market AR` te muestra el markup
+   envejece rápido: `node src/cli.ts pricing` te muestra el markup
    vigente, y si bajó de 3x hay que reajustar.
    **Los de México, Colombia y Chile no están verificados**: son conversiones
    aproximadas del ancla en USD. Si vendés ahí, revisalos antes de publicar.
-3. **La comisión de Mercado Pago del 7,85% asume acreditación inmediata.** A 14
-   días baja a cerca de 4,2% y el margen mejora bastante. Y si ofrecés cuotas sin
-   interés, el costo sube entre 7 y 14 puntos más: eso se come el margen entero,
-   así que antes de activarlas corré `pricing --market AR --payment-fee 0.18` y
-   mirá si el número sigue cerrando.
+3. **La comisión de Mercado Pago del 6,49% asume acreditación inmediata.** A 14
+   días baja a cerca de 3,49% y el margen mejora bastante. Y si ofrecés cuotas sin
+   interés, el costo sube entre 7 y 14 puntos: eso se come el margen entero, así
+   que antes de activarlas corré `pricing --payment-fee 0.16` y mirá si el
+   número sigue cerrando.
 
-4. **El mercado global de antifaces es chico** (USD 17,2 millones en 2026). No es
+4. **El IIBB del 3% asume una alícuota de comercio minorista.** Varía por
+   provincia, y si despachás a todo el país entrás en Convenio Multilateral.
+   Confirmalo con tu contador y ajustá con `--payment-fee` o en la tabla de
+   `MARKET_ASSUMPTIONS`.
+
+5. **El mercado global de antifaces es chico** (USD 17,2 millones en 2026). No es
    un problema para un negocio de nicho, pero sí significa que no hay espacio
    para un jugador masivo: el techo está en marca y margen, no en volumen.
-5. **Pedí muestra física antes de comprar volumen.** La diferencia entre un
+6. **Pedí muestra física antes de comprar volumen.** La diferencia entre un
    antifaz 3D bueno y uno malo está en el bloque nasal y en la costura de las
    cavidades. Es exactamente lo que el cliente evalúa la primera noche y lo que
    determina si te devuelven el producto.
-6. **La descripción afirma cosas verificables** (0% de luz, 85 g, 2,3 cm de
+7. **La descripción afirma cosas verificables** (0% de luz, 85 g, 2,3 cm de
    espacio, 52–66 cm de correa, 26 dB en los tapones). **Confirmá cada número
    contra el producto real** y corregí el catálogo si no coinciden. La ventaja
    regulatoria de este producto es justamente que no necesita prometer nada que

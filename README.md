@@ -41,27 +41,26 @@ catálogo está mal, este comando te dice exactamente qué campo y en qué archi
 ### 2. Revisá los números
 
 ```bash
-node src/cli.ts pricing --market AR --cac 6000 --shipping 3500
+node src/cli.ts pricing --cac 6000 --shipping 3500
 ```
 
 Calcula margen bruto, ganancia neta y **ROAS de equilibrio** por variante.
 
-Los impuestos salen del mercado que elijas: para `AR` aplica **IVA 21% incluido
-en el precio**, **ingresos brutos 3%** y la comisión de **Mercado Pago 7,85%**.
+Los impuestos salen del mercado, y `AR` es el que viene por defecto: **IVA 21%
+incluido en el precio**, **ingresos brutos 3%** y la comisión de **Mercado Pago
+6,49%** neta de IVA.
 Eso importa más de lo que parece — el precio de góndola en LatAm es final al
 consumidor, así que el IVA se cobra pero no es ingreso, y contarlo como tal
 infla el margen un 17%.
 
-En Argentina, además, elegí el régimen con `--regimen`:
+Por defecto asume **responsable inscripto**. Si facturás con monotributo,
+pasá `--regimen monotributo`: no discriminás IVA en la venta (Factura C), pero
+tampoco recuperás el de las compras, así que ese 21% se te va al costo.
 
-```bash
-node src/cli.ts pricing --market AR --regimen monotributo
-```
-
-El monotributista no discrimina IVA en la venta (Factura C), pero tampoco
-recupera el de las compras, así que ese 21% se le va al costo. El markup
-termina igual en los dos regímenes; lo que cambia es la contribución, porque la
-comisión de la pasarela y el IIBB se calculan sobre el total facturado.
+**Pasá todos los costos netos de IVA** — la comisión, el envío y el `cost` del
+catálogo. El modelo les suma el IVA solo si tu régimen no lo recupera. Por eso
+la comisión de Mercado Pago figura como 6,49% y no 7,85%: para un responsable
+inscripto el IVA sobre la comisión es crédito fiscal.
 
 Con `--payment-fee`, `--shipping` y `--cac` pisás cualquier supuesto.
 
@@ -95,7 +94,7 @@ qué credencial revisar.
 ### 5. Publicá
 
 ```bash
-node src/cli.ts publish --market AR
+node src/cli.ts publish
 ```
 
 Pide confirmación antes de escribir nada. Con `--yes` la omite.
@@ -140,7 +139,7 @@ Opciones comunes:
 |---|---|
 | `--platform shopify\|tiendanube` | Una sola plataforma. Por defecto, todas las que tengan credenciales. |
 | `--product <slug>` | Un solo producto. Por defecto, todo el catálogo. |
-| `--market AR\|MX\|CO\|CL\|UY\|BR\|US` | Qué precios e impuestos usar. Por defecto `US`. |
+| `--market AR\|MX\|CO\|CL\|UY\|BR\|US` | Qué precios e impuestos usar. Por defecto `AR`. |
 | `--regimen monotributo\|responsable-inscripto` | Régimen impositivo, sólo con `--market AR`. |
 | `--cac`, `--shipping`, `--payment-fee` | Pisan los supuestos de `pricing`. |
 | `--yes` | Publicar sin confirmación interactiva. |
