@@ -1,0 +1,23 @@
+{
+  "name": "tiendas",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Catálogo y publicación de productos en Shopify y Tiendanube",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "list": "node src/cli.ts list",
+    "pricing": "node src/cli.ts pricing",
+    "preview": "node src/cli.ts preview",
+    "ping": "node src/cli.ts ping",
+    "publish": "node src/cli.ts publish",
+    "test": "node --test",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "typescript": "^6.0.0"
+  }
+}

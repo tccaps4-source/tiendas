@@ -1,0 +1,54 @@
+{
+  "slug": "noctu-tapones-silicona",
+  "name": "Noctu Silence — Tapones de silicona reutilizables (3 pares)",
+  "brand": "Noctu",
+  "productType": "Tapones para dormir",
+  "published": true,
+
+  "descriptionHtml": "<p><strong>Tres tamaños, porque no todos los oídos son iguales.</strong> El tapón que le sirve a tu pareja probablemente a vos te queda flojo o te duele. Vienen S, M y L en la misma caja: probás los tres la primera noche y te quedás con el tuyo.</p>\n<h3>Por qué estos y no los de espuma</h3>\n<ul>\n  <li><strong>Reutilizables.</strong> Silicona de grado médico, lavable con agua y jabón. Duran meses, no tres noches.</li>\n  <li><strong>Perfil bajo.</strong> No sobresalen de la oreja, así que podés dormir de costado sin que se te claven contra la almohada.</li>\n  <li><strong>Sellan sin presionar.</strong> Tres aletas flexibles que se acomodan al canal auditivo en vez de expandirse a presión.</li>\n  <li><strong>Estuche incluido.</strong> Para que no terminen sueltos en el fondo de la mesa de luz.</li>\n</ul>\n<h3>Qué incluye</h3>\n<ul>\n  <li>3 pares de tapones (S, M, L)</li>\n  <li>1 estuche compacto con cordón</li>\n</ul>\n<p><strong>Reducción de ruido: 26 dB (NRR)</strong> · Silicona sin BPA · <strong>Envíos a todo el país</strong></p>",
+
+  "seo": {
+    "title": "Tapones de silicona para dormir reutilizables 3 pares | Noctu",
+    "description": "Tapones de silicona de grado médico en 3 tamaños, perfil bajo para dormir de costado. 26 dB de reducción. Lavables y con estuche. Envíos a todo el país."
+  },
+
+  "tags": [
+    "tapones para dormir",
+    "tapones silicona",
+    "reutilizables",
+    "dormir mejor",
+    "ruido",
+    "sleepmaxxing"
+  ],
+
+  "options": [],
+
+  "variants": [
+    {
+      "optionValues": [],
+      "sku": "NOC-SIL-3P",
+      "weightKg": 0.04,
+      "stock": 150
+    }
+  ],
+
+  "images": [
+    {
+      "src": "https://placehold.co/1200x1200/16161a/f4f1ea/png?text=REEMPLAZAR%0ATapones+3+pares",
+      "alt": "Tres pares de tapones de silicona Noctu Silence junto a su estuche"
+    }
+  ],
+
+  "pricing": {
+    "currency": "USD",
+    "price": 14.9,
+    "cost": 1.6
+  },
+
+  "markets": {
+    "AR": { "currency": "ARS", "price": 19900, "cost": 2200 },
+    "MX": { "currency": "MXN", "price": 279, "cost": 29 },
+    "CO": { "currency": "COP", "price": 59900, "cost": 6400 },
+    "CL": { "currency": "CLP", "price": 13900, "cost": 1550 }
+  }
+}

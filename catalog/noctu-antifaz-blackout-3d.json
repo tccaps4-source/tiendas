@@ -1,0 +1,78 @@
+{
+  "slug": "noctu-antifaz-blackout-3d",
+  "name": "Noctu Blackout 3D — Antifaz para dormir con oscuridad total",
+  "brand": "Noctu",
+  "productType": "Antifaz para dormir",
+  "published": true,
+
+  "descriptionHtml": "<p><strong>Oscuridad total, sin presión en los ojos.</strong> El antifaz plano te aplasta los párpados y siempre deja entrar luz por la nariz. El Noctu Blackout 3D no: sus cavidades moldeadas dejan un espacio de 2,3 cm frente a cada ojo, así podés parpadear, mover los ojos y usar pestañas postizas sin que nada las toque.</p>\n<h3>Por qué funciona</h3>\n<ul>\n  <li><strong>0% de luz.</strong> Bloque nasal acolchado con memory foam que se adapta al puente de la nariz y cierra la rendija por donde entra la luz en los antifaces comunes.</li>\n  <li><strong>No te aprieta la cabeza.</strong> Correa regulable de 2 cm con hebilla plana: no se enreda el pelo y no deja marcas al despertar.</li>\n  <li><strong>Liviano de verdad.</strong> 85 gramos. Te lo ponés y te olvidás de que lo tenés puesto.</li>\n  <li><strong>Interior de seda sintética.</strong> Suave, transpirable e hipoalergénico. Se lava a mano con agua fría y se seca en una noche.</li>\n</ul>\n<h3>Para quién es</h3>\n<p>Para el que duerme de día después de un turno noche. Para el que comparte cuarto con alguien que se acuesta más tarde. Para viajes en avión y micro. Para la persiana que nunca cerró del todo.</p>\n<h3>Qué incluye</h3>\n<ul>\n  <li>1 antifaz Noctu Blackout 3D</li>\n  <li>1 bolsa de algodón para guardarlo o llevarlo de viaje</li>\n</ul>\n<p><strong>Talle único</strong> · Circunferencia regulable de 52 a 66 cm · <strong>Envíos a todo el país</strong></p>",
+
+  "seo": {
+    "title": "Antifaz para dormir 3D con oscuridad total | Noctu Blackout",
+    "description": "Antifaz contorneado que bloquea el 100% de la luz sin presionar los ojos. Memory foam, correa regulable y 85 g. Talle único. Envíos a todo el país."
+  },
+
+  "tags": [
+    "antifaz para dormir",
+    "antifaz 3d",
+    "blackout",
+    "dormir mejor",
+    "descanso",
+    "viaje",
+    "turno noche",
+    "sleepmaxxing",
+    "regalo"
+  ],
+
+  "options": ["Color"],
+
+  "variants": [
+    {
+      "optionValues": ["Negro Total"],
+      "sku": "NOC-BLK3D-NEG",
+      "weightKg": 0.085,
+      "stock": 120
+    },
+    {
+      "optionValues": ["Gris Piedra"],
+      "sku": "NOC-BLK3D-GRI",
+      "weightKg": 0.085,
+      "stock": 80
+    },
+    {
+      "optionValues": ["Vino"],
+      "sku": "NOC-BLK3D-VIN",
+      "weightKg": 0.085,
+      "stock": 60
+    }
+  ],
+
+  "images": [
+    {
+      "src": "https://placehold.co/1200x1200/16161a/f4f1ea/png?text=REEMPLAZAR%0AFoto+producto",
+      "alt": "Antifaz Noctu Blackout 3D en color negro sobre fondo neutro"
+    },
+    {
+      "src": "https://placehold.co/1200x1200/16161a/f4f1ea/png?text=REEMPLAZAR%0AFoto+en+uso",
+      "alt": "Persona durmiendo de costado con el antifaz Noctu Blackout 3D puesto"
+    },
+    {
+      "src": "https://placehold.co/1200x1200/16161a/f4f1ea/png?text=REEMPLAZAR%0ADetalle+cavidades",
+      "alt": "Vista interior del antifaz mostrando las cavidades moldeadas para los ojos"
+    }
+  ],
+
+  "pricing": {
+    "currency": "USD",
+    "price": 24.9,
+    "compareAtPrice": 34.9,
+    "cost": 3.2
+  },
+
+  "markets": {
+    "AR": { "currency": "ARS", "price": 33900, "compareAtPrice": 46900, "cost": 4400 },
+    "MX": { "currency": "MXN", "price": 459, "compareAtPrice": 649, "cost": 59 },
+    "CO": { "currency": "COP", "price": 99900, "compareAtPrice": 139900, "cost": 12800 },
+    "CL": { "currency": "CLP", "price": 23900, "compareAtPrice": 32900, "cost": 3100 }
+  }
+}

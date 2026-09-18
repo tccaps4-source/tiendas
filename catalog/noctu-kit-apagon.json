@@ -1,0 +1,67 @@
+{
+  "slug": "noctu-kit-apagon",
+  "name": "Noctu Kit Apagón — Antifaz 3D + tapones de silicona + estuche",
+  "brand": "Noctu",
+  "productType": "Kit de descanso",
+  "published": true,
+
+  "descriptionHtml": "<p><strong>Luz y ruido, resueltos de una.</strong> El antifaz solo te saca la luz. Este kit te saca las dos cosas que te despiertan.</p>\n<h3>Qué incluye</h3>\n<ul>\n  <li><strong>Antifaz Noctu Blackout 3D.</strong> Cavidades moldeadas, bloque nasal de memory foam, 0% de luz, sin presión en los ojos.</li>\n  <li><strong>3 pares de tapones de silicona Noctu Silence.</strong> Tres tamaños (S, M, L) para que encuentres el que te sella sin molestar. Reutilizables y lavables.</li>\n  <li><strong>Estuche rígido de viaje.</strong> Entra en el bolsillo del asiento del avión o en la mochila sin que se aplaste nada.</li>\n</ul>\n<h3>Por qué el kit y no sólo el antifaz</h3>\n<p>Si dormís de día, el problema nunca es sólo la persiana: es el timbre, la obra de al lado y el colectivo. Comprar las dos cosas por separado sale más caro y casi siempre terminás usando tapones de espuma descartables que se aplastan a la tercera noche.</p>\n<h3>Ideal para regalar</h3>\n<p>Llega en caja lista para entregar. Es el regalo obvio para alguien que trabaja de noche, que viaja seguido o que vive quejándose de que no duerme bien.</p>\n<p><strong>Talle único</strong> · Correa regulable de 52 a 66 cm · <strong>Envíos a todo el país</strong></p>",
+
+  "seo": {
+    "title": "Kit para dormir: antifaz 3D + tapones + estuche | Noctu Apagón",
+    "description": "Antifaz blackout 3D, 3 pares de tapones de silicona reutilizables y estuche de viaje. Bloquea luz y ruido. Listo para regalar. Envíos a todo el país."
+  },
+
+  "tags": [
+    "kit para dormir",
+    "antifaz y tapones",
+    "dormir mejor",
+    "regalo",
+    "viaje",
+    "turno noche",
+    "sleepmaxxing",
+    "combo"
+  ],
+
+  "options": ["Color"],
+
+  "variants": [
+    {
+      "optionValues": ["Negro Total"],
+      "sku": "NOC-KIT-NEG",
+      "weightKg": 0.215,
+      "stock": 70
+    },
+    {
+      "optionValues": ["Gris Piedra"],
+      "sku": "NOC-KIT-GRI",
+      "weightKg": 0.215,
+      "stock": 50
+    }
+  ],
+
+  "images": [
+    {
+      "src": "https://placehold.co/1200x1200/16161a/f4f1ea/png?text=REEMPLAZAR%0AKit+completo",
+      "alt": "Kit Noctu Apagón con antifaz, tapones de silicona y estuche rígido"
+    },
+    {
+      "src": "https://placehold.co/1200x1200/16161a/f4f1ea/png?text=REEMPLAZAR%0AEstuche+abierto",
+      "alt": "Estuche rígido de viaje abierto con el antifaz y los tapones adentro"
+    }
+  ],
+
+  "pricing": {
+    "currency": "USD",
+    "price": 39.9,
+    "compareAtPrice": 54.8,
+    "cost": 5.9
+  },
+
+  "markets": {
+    "AR": { "currency": "ARS", "price": 54900, "compareAtPrice": 74900, "cost": 8100 },
+    "MX": { "currency": "MXN", "price": 739, "compareAtPrice": 1019, "cost": 109 },
+    "CO": { "currency": "COP", "price": 159900, "compareAtPrice": 219900, "cost": 23600 },
+    "CL": { "currency": "CLP", "price": 38900, "compareAtPrice": 52900, "cost": 5700 }
+  }
+}
