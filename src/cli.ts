@@ -6,7 +6,7 @@ import { loadCatalog, findProduct } from './catalog/index.ts';
 import { ShopifyAdapter } from './adapters/shopify.ts';
 import { TiendanubeAdapter } from './adapters/tiendanube.ts';
 import {
-  DEFAULT_ASSUMPTIONS,
+  assumptionsFor,
   formatMoney,
   formatPct,
   resolvePricing,
@@ -36,7 +36,8 @@ Opciones
   --market <código>       ${MARKETS.join(' | ')}   (por defecto: US)
   --cac <monto>           Costo de adquisición por cliente, para 'pricing'
   --shipping <monto>      Envío absorbido por pedido, para 'pricing'
-  --payment-fee <tasa>    Comisión de la pasarela, ej. 0.064, para 'pricing'
+  --payment-fee <tasa>    Comisión de la pasarela, ej. 0.0785, para 'pricing'
+                          (IVA e IIBB salen del mercado elegido)
   --yes                   Publica sin pedir confirmación
   --help                  Muestra esta ayuda
 
@@ -117,8 +118,12 @@ function commandPricing(market: Market, assumptions: CostAssumptions, slug?: str
 
   console.log(`Economía unitaria — mercado ${market}`);
   console.log(
-    `Supuestos: pasarela ${formatPct(assumptions.paymentFeeRate)} · ` +
-      `envío ${assumptions.shippingCost} · CAC ${assumptions.cac} · ` +
+    `Supuestos: IVA ${formatPct(assumptions.salesTaxRate)} incluido en el precio · ` +
+      `IIBB ${formatPct(assumptions.grossReceiptsTaxRate)} · ` +
+      `pasarela ${formatPct(assumptions.paymentFeeRate)}`,
+  );
+  console.log(
+    `           envío ${assumptions.shippingCost} · CAC ${assumptions.cac} · ` +
       `devoluciones ${formatPct(assumptions.returnRate)}\n`,
   );
 
@@ -132,12 +137,13 @@ function commandPricing(market: Market, assumptions: CostAssumptions, slug?: str
 
       console.log(`    ${variant.sku}  (${label})`);
       console.log(
-        `      precio ${formatMoney(economics.price, economics.currency)} · ` +
-          `costo ${formatMoney(economics.cost, economics.currency)} · ` +
-          `markup ${economics.markup.toFixed(1)}x`,
+        `      precio final ${formatMoney(economics.price, economics.currency)} · ` +
+          `ingreso neto ${formatMoney(economics.netRevenue, economics.currency)} · ` +
+          `costo ${formatMoney(economics.cost, economics.currency)}`,
       );
       console.log(
-        `      margen bruto ${formatPct(economics.grossMargin)} · ` +
+        `      markup ${economics.markup.toFixed(1)}x · ` +
+          `margen bruto ${formatPct(economics.grossMargin)} · ` +
           `neto ${formatMoney(economics.netProfit, economics.currency)} ` +
           `(${formatPct(economics.netMargin)})`,
       );
@@ -282,14 +288,17 @@ async function main(): Promise<void> {
       return commandList();
 
     case 'pricing': {
-      const assumptions: CostAssumptions = {
-        ...DEFAULT_ASSUMPTIONS,
-        cac: parseNumber(values.cac, '--cac') ?? DEFAULT_ASSUMPTIONS.cac,
-        shippingCost: parseNumber(values.shipping, '--shipping') ?? DEFAULT_ASSUMPTIONS.shippingCost,
-        paymentFeeRate:
-          parseNumber(values['payment-fee'], '--payment-fee') ?? DEFAULT_ASSUMPTIONS.paymentFeeRate,
-      };
-      return commandPricing(market, assumptions, values.product);
+      // Los impuestos y la comisión salen del mercado; las banderas los pisan.
+      const overrides: Partial<CostAssumptions> = {};
+      const cac = parseNumber(values.cac, '--cac');
+      const shipping = parseNumber(values.shipping, '--shipping');
+      const paymentFee = parseNumber(values['payment-fee'], '--payment-fee');
+
+      if (cac !== undefined) overrides.cac = cac;
+      if (shipping !== undefined) overrides.shippingCost = shipping;
+      if (paymentFee !== undefined) overrides.paymentFeeRate = paymentFee;
+
+      return commandPricing(market, assumptionsFor(market, overrides), values.product);
     }
 
     case 'preview':

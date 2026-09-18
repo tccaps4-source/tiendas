@@ -2,7 +2,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { ShopifyAdapter } from './shopify.ts';
 import { TiendanubeAdapter } from './tiendanube.ts';
-import { unitEconomics, resolvePricing } from '../pricing.ts';
+import { unitEconomics, resolvePricing, assumptionsFor } from '../pricing.ts';
 import { loadCatalog, findProduct } from '../catalog/index.ts';
 import type { Product } from '../types.ts';
 
@@ -92,10 +92,19 @@ describe('resolvePricing', () => {
 });
 
 describe('unitEconomics', () => {
+  const sinImpuestos = {
+    paymentFeeRate: 0,
+    salesTaxRate: 0,
+    grossReceiptsTaxRate: 0,
+    shippingCost: 0,
+    cac: 0,
+    returnRate: 0,
+  };
+
   test('descuenta pasarela, envío, CAC y devoluciones del margen bruto', () => {
     const e = unitEconomics(
       { currency: 'USD', price: 100, cost: 20 },
-      { paymentFeeRate: 0.05, shippingCost: 10, cac: 15, returnRate: 0.1 },
+      { ...sinImpuestos, paymentFeeRate: 0.05, shippingCost: 10, cac: 15, returnRate: 0.1 },
     );
 
     assert.equal(e.grossProfit, 80);
@@ -107,14 +116,75 @@ describe('unitEconomics', () => {
     assert.equal(e.markup, 5);
   });
 
+  test('el IVA incluido en el precio no cuenta como ingreso', () => {
+    const e = unitEconomics(
+      { currency: 'ARS', price: 121, cost: 21 },
+      { ...sinImpuestos, salesTaxRate: 0.21 },
+    );
+
+    assert.equal(e.netRevenue, 100);
+    assert.equal(e.salesTax, 21);
+    // El margen se mide contra los 100 de ingreso real, no contra los 121.
+    assert.equal(e.grossProfit, 79);
+    assert.equal(e.grossMargin, 0.79);
+  });
+
+  test('ignorar el IVA sobreestima el margen', () => {
+    const precio = { currency: 'ARS', price: 121, cost: 21 };
+    const conIva = unitEconomics(precio, { ...sinImpuestos, salesTaxRate: 0.21 });
+    const sinIva = unitEconomics(precio, sinImpuestos);
+
+    assert.ok(sinIva.grossMargin > conIva.grossMargin);
+    assert.ok(sinIva.markup > conIva.markup);
+  });
+
+  test('pasarela e ingresos brutos se cobran sobre el total con IVA', () => {
+    const e = unitEconomics(
+      { currency: 'ARS', price: 1000, cost: 100 },
+      { ...sinImpuestos, salesTaxRate: 0.21, paymentFeeRate: 0.0785, grossReceiptsTaxRate: 0.03 },
+    );
+
+    assert.equal(e.paymentFee, 78.5);
+    assert.equal(e.grossReceiptsTax, 30);
+  });
+
   test('el ROAS de equilibrio ignora el CAC porque es lo que el CAC debe cubrir', () => {
-    const assumptions = { paymentFeeRate: 0, shippingCost: 0, cac: 0, returnRate: 0 };
-    const sinCac = unitEconomics({ currency: 'USD', price: 100, cost: 25 }, assumptions);
-    const conCac = unitEconomics({ currency: 'USD', price: 100, cost: 25 }, { ...assumptions, cac: 40 });
+    const sinCac = unitEconomics({ currency: 'USD', price: 100, cost: 25 }, sinImpuestos);
+    const conCac = unitEconomics({ currency: 'USD', price: 100, cost: 25 }, { ...sinImpuestos, cac: 40 });
 
     assert.equal(sinCac.breakEvenRoas, conCac.breakEvenRoas);
     // Con 75% de margen de contribución hace falta facturar 1,33x lo invertido.
     assert.equal(Math.round(conCac.breakEvenRoas * 100) / 100, 1.33);
+  });
+
+  test('el ROAS de equilibrio se mide contra el total que reporta la plataforma', () => {
+    // Con IVA, la contribución baja pero el ROAS sigue midiéndose sobre el
+    // precio final, que es lo que ve el pixel de la plataforma de anuncios.
+    const e = unitEconomics(
+      { currency: 'ARS', price: 121, cost: 21 },
+      { ...sinImpuestos, salesTaxRate: 0.21 },
+    );
+
+    assert.equal(e.contribution, 79);
+    assert.equal(Math.round((121 / 79) * 100) / 100, Math.round(e.breakEvenRoas * 100) / 100);
+  });
+});
+
+describe('assumptionsFor', () => {
+  test('aplica el IVA del mercado', () => {
+    assert.equal(assumptionsFor('AR').salesTaxRate, 0.21);
+    assert.equal(assumptionsFor('MX').salesTaxRate, 0.16);
+    assert.equal(assumptionsFor('US').salesTaxRate, 0);
+  });
+
+  test('Argentina trae además IIBB y la comisión de Mercado Pago', () => {
+    const ar = assumptionsFor('AR');
+    assert.equal(ar.grossReceiptsTaxRate, 0.03);
+    assert.equal(ar.paymentFeeRate, 0.0785);
+  });
+
+  test('lo que pasa el usuario pisa al mercado', () => {
+    assert.equal(assumptionsFor('AR', { paymentFeeRate: 0.04 }).paymentFeeRate, 0.04);
   });
 });
 
@@ -226,7 +296,7 @@ describe('catálogo del repositorio', () => {
     const hero = findProduct('noctu-antifaz-blackout-3d');
 
     for (const market of ['US', 'AR', 'MX', 'CO', 'CL'] as const) {
-      const economics = unitEconomics(resolvePricing(hero, hero.variants[0], market));
+      const economics = unitEconomics(resolvePricing(hero, hero.variants[0], market), assumptionsFor(market));
       assert.ok(economics.markup >= 3, `${market}: markup ${economics.markup.toFixed(1)}x < 3x`);
       assert.ok(
         economics.breakEvenRoas <= 2,

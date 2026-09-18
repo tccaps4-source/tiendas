@@ -11,7 +11,7 @@ plata real** si el producto convierte antes de comprometer capital en stock.
 Sólo hace falta una. Las dos están implementadas, así que la decisión es de
 negocio, no técnica.
 
-**Tiendanube** si vendés en Argentina, México, Colombia, Chile o Brasil.
+**Tiendanube** — es la elegida para este proyecto, que vende en Argentina.
 Mercado Pago viene integrado, los medios de pago locales y las cuotas funcionan
 sin configurar nada, la integración con Andreani / Correo Argentino / OCA es
 nativa y el plan inicial es más barato. Es la opción por defecto para LatAm.
@@ -21,8 +21,8 @@ que vas a necesitar el ecosistema de apps (suscripciones, upsells avanzados,
 multi-país). Más potente, más caro, y en LatAm los medios de pago locales
 requieren más trabajo.
 
-> Si dudás, arrancá en Tiendanube. El catálogo de este repositorio es el mismo
-> para las dos, así que migrar después es correr `publish` apuntando a la otra.
+> El catálogo de este repositorio es el mismo para las dos, así que si más
+> adelante querés migrar, es correr `publish` apuntando a la otra.
 
 ---
 
@@ -48,6 +48,11 @@ y es el que separa perder USD 200 de perder USD 3.000.
 
    Si el markup quedó abajo de 3x, o subís el precio o cambiás de proveedor.
    No arranques con menos.
+
+5. **Revisá el tipo de cambio.** Los precios del catálogo están a ARS 1.550 por
+   dólar, del 17 de septiembre de 2026. En Argentina eso envejece en semanas: si
+   el dólar se movió, reajustá los `markets.AR` de cada JSON y volvé a correr
+   `pricing`.
 
 ---
 
@@ -85,13 +90,20 @@ node src/cli.ts publish --market AR
 
 Los tres productos quedan cargados. Lo que falta configurar a mano en el panel:
 
-- **Medios de pago.** Mercado Pago en LatAm. Activá cuotas sin interés si tu
-  margen las banca: en Argentina mueven la conversión más que cualquier otra
-  palanca.
+- **Medios de pago.** Mercado Pago. Ojo con el plazo de acreditación: inmediata
+  cuesta 7,85% y a 14 días cerca de 4,2%. Si tu flujo de caja lo aguanta, los 14
+  días te devuelven 3,6 puntos de margen.
 - **Envíos.** Los pesos ya están en el catálogo (85 g el antifaz, 215 g el kit),
   así que la cotización automática funciona apenas conectes el transportista.
-- **Envío gratis a partir del kit.** Es lo que empuja del antifaz al kit. Poné
-  el umbral justo abajo del precio del kit.
+- **Envío gratis desde ARS 62.900**, o sea a partir del kit. No es una
+  preferencia estética: con envío absorbido el antifaz suelto queda en 2,02x de
+  ROAS de equilibrio y los tapones en 2,17x, los dos por encima del límite
+  sano. Los números están en
+  [`PRODUCTO-GANADOR.md`](PRODUCTO-GANADOR.md#el-envío-gratis-define-la-estrategia).
+- **Pensá dos veces las cuotas sin interés.** Mueven la conversión en Argentina
+  como ninguna otra palanca, pero el costo financiero lo absorbés vos: entre 7 y
+  14 puntos adicionales de comisión. Antes de activarlas, corré
+  `pricing --market AR --payment-fee 0.18` y mirá si el número todavía cierra.
 - **Página "Cómo elegir tu antifaz"** comparando plano vs. 3D. Capta búsquedas
   informativas y es la página a la que mandar el tráfico frío.
 
@@ -131,8 +143,9 @@ la inversión sobre un embudo que no convierte sólo acelera la pérdida.
 El margen ya es alto; lo que mueve la aguja ahora es cuánto gasta cada cliente.
 El orden importa: cada paso cuesta más trabajo que el anterior.
 
-1. **Upsell al kit en la ficha del antifaz.** "Sumá tapones y estuche por USD 15
-   más." Es gratis y es lo que más convierte.
+1. **Upsell al kit en la ficha del antifaz.** "Sumá tapones y estuche por ARS
+   24.000 más y te llega con envío gratis." Es gratis de implementar y es lo que
+   más convierte, porque junta las dos palancas: el ahorro y el envío.
 2. **Bump en el checkout:** un segundo par de tapones a mitad de precio.
 3. **Email a los 30 días** de la compra del antifaz ofreciendo los tapones. La
    gente que arregló el problema de la luz ya sabe que el que le queda es el

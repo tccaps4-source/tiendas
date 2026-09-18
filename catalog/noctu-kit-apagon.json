@@ -59,7 +59,7 @@
   },
 
   "markets": {
-    "AR": { "currency": "ARS", "price": 54900, "compareAtPrice": 74900, "cost": 8100 },
+    "AR": { "currency": "ARS", "price": 62900, "compareAtPrice": 84900, "cost": 9150 },
     "MX": { "currency": "MXN", "price": 739, "compareAtPrice": 1019, "cost": 109 },
     "CO": { "currency": "COP", "price": 159900, "compareAtPrice": 219900, "cost": 23600 },
     "CL": { "currency": "CLP", "price": 38900, "compareAtPrice": 52900, "cost": 5700 }

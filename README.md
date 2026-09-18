@@ -44,8 +44,14 @@ catálogo está mal, este comando te dice exactamente qué campo y en qué archi
 node src/cli.ts pricing --market AR --cac 6000 --shipping 3500
 ```
 
-Calcula margen bruto, ganancia neta y **ROAS de equilibrio** por variante, con
-tus supuestos de comisión de pasarela, envío y costo de adquisición.
+Calcula margen bruto, ganancia neta y **ROAS de equilibrio** por variante.
+
+Los impuestos salen del mercado que elijas: para `AR` aplica **IVA 21% incluido
+en el precio**, **ingresos brutos 3%** y la comisión de **Mercado Pago 7,85%**.
+Eso importa más de lo que parece — el precio de góndola en LatAm es final al
+consumidor, así que el IVA se cobra pero no es ingreso, y contarlo como tal
+infla el margen un 17%. Con `--payment-fee`, `--shipping` y `--cac` pisás los
+supuestos que quieras.
 
 Como referencia: **markup de 3x o más** y **ROAS de equilibrio de 2x o menos**
 es el piso para que un producto aguante tráfico pago.
@@ -94,8 +100,9 @@ Dos cosas del catálogo son deliberadamente provisorias:
 1. **Las imágenes son placeholders.** Dicen "REEMPLAZAR" encima. Cambiá el campo
    `images[].src` de cada JSON por URLs `https` de tus fotos reales antes de
    publicar en producción.
-2. **Los precios por mercado están anclados a USD** con un tipo de cambio
-   aproximado a septiembre de 2026. Verificalos con
+2. **Los precios argentinos están a ARS 1.550 por dólar**, verificado el 17 de
+   septiembre de 2026; los de México, Colombia y Chile son conversiones
+   aproximadas sin verificar. Chequeá con
    `node src/cli.ts pricing --market <tu mercado>`: si el markup bajó de 3x, el
    tipo de cambio se movió y hay que reajustar.
 
@@ -121,7 +128,8 @@ Opciones comunes:
 |---|---|
 | `--platform shopify\|tiendanube` | Una sola plataforma. Por defecto, todas las que tengan credenciales. |
 | `--product <slug>` | Un solo producto. Por defecto, todo el catálogo. |
-| `--market AR\|MX\|CO\|CL\|UY\|BR\|US` | Qué precios usar. Por defecto `US`. |
+| `--market AR\|MX\|CO\|CL\|UY\|BR\|US` | Qué precios e impuestos usar. Por defecto `US`. |
+| `--cac`, `--shipping`, `--payment-fee` | Pisan los supuestos de `pricing`. |
 | `--yes` | Publicar sin confirmación interactiva. |
 
 ---
@@ -159,7 +167,7 @@ y títulos SEO dentro de los límites de los buscadores.
     "cost": 3.2
   },
   "markets": {
-    "AR": { "currency": "ARS", "price": 33900, "cost": 4400 }
+    "AR": { "currency": "ARS", "price": 38900, "cost": 4960 }
   }
 }
 ```
@@ -225,7 +233,7 @@ node --test          # 22 tests, sin dependencias
 npm run typecheck    # requiere npm install
 ```
 
-Los tests cubren la resolución de precios entre monedas, la economía unitaria,
-el mapeo a cada plataforma y una verificación de que el producto principal
-mantiene markup ≥ 3x y ROAS de equilibrio ≤ 2x en todos los mercados del
-catálogo.
+Los tests cubren la resolución de precios entre monedas, la economía unitaria
+con impuestos, el mapeo a cada plataforma y una verificación de que el producto
+principal mantiene markup ≥ 3x y ROAS de equilibrio ≤ 2x en todos los mercados
+del catálogo.

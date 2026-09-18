@@ -53,6 +53,17 @@ export function resolvePricing(product: Product, variant: Variant, market: Marke
 export interface CostAssumptions {
   /** Comisión de la pasarela de pago (Mercado Pago, Shopify Payments...). */
   paymentFeeRate: number;
+  /**
+   * IVA ya incluido en el precio mostrado.
+   *
+   * En LatAm el precio de góndola es final al consumidor, así que esta parte
+   * no es ingreso: se le debe al fisco. Ignorarla infla el margen un 17% en
+   * Argentina. Poné 0 donde el impuesto se suma recién en el checkout, como
+   * en Estados Unidos.
+   */
+  salesTaxRate: number;
+  /** Impuesto sobre los ingresos brutos (IIBB en Argentina), sobre el precio final. */
+  grossReceiptsTaxRate: number;
   /** Costo de envío absorbido por la tienda, por pedido, en la moneda del precio. */
   shippingCost: number;
   /** Costo de adquisición por cliente (publicidad / CPA). */
@@ -61,28 +72,66 @@ export interface CostAssumptions {
   returnRate: number;
 }
 
-/** Supuestos por defecto, calibrados para LatAm con envío propio y tráfico pago. */
+/** Supuestos por defecto: sin impuestos locales, con envío a cargo del comprador. */
 export const DEFAULT_ASSUMPTIONS: CostAssumptions = {
   paymentFeeRate: 0.064,
+  salesTaxRate: 0,
+  grossReceiptsTaxRate: 0,
   shippingCost: 0,
   cac: 0,
   returnRate: 0.03,
 };
 
+/**
+ * Supuestos por mercado, aplicados automáticamente según `--market`.
+ *
+ * Las alícuotas de IVA son datos públicos y estables. La comisión de pasarela
+ * sólo está calibrada para Argentina (Mercado Pago Checkout Pro con
+ * acreditación inmediata, 6,49% + IVA sobre la comisión); en el resto de los
+ * mercados queda el valor genérico y conviene reemplazarlo con `--payment-fee`
+ * por el que te cobre tu pasarela.
+ */
+export const MARKET_ASSUMPTIONS: Partial<Record<Market, Partial<CostAssumptions>>> = {
+  AR: { salesTaxRate: 0.21, grossReceiptsTaxRate: 0.03, paymentFeeRate: 0.0785 },
+  MX: { salesTaxRate: 0.16 },
+  CO: { salesTaxRate: 0.19 },
+  CL: { salesTaxRate: 0.19 },
+  UY: { salesTaxRate: 0.22 },
+  BR: { salesTaxRate: 0.18 },
+  // En Estados Unidos el sales tax se agrega en el checkout, no viene incluido.
+  US: { salesTaxRate: 0 },
+};
+
+/** Combina los valores por defecto, los del mercado y los que pase el usuario. */
+export function assumptionsFor(
+  market: Market,
+  overrides: Partial<CostAssumptions> = {},
+): CostAssumptions {
+  return { ...DEFAULT_ASSUMPTIONS, ...(MARKET_ASSUMPTIONS[market] ?? {}), ...overrides };
+}
+
 export interface UnitEconomics {
-  price: number;
-  cost: number;
   currency: string;
-  grossProfit: number;
-  /** Margen bruto: (precio - costo) / precio. */
-  grossMargin: number;
+  /** Lo que paga el comprador, con IVA incluido. Es sobre esto que se mide el ROAS. */
+  price: number;
+  /** Lo que realmente factura la tienda, una vez descontado el IVA. */
+  netRevenue: number;
+  cost: number;
+  salesTax: number;
+  grossReceiptsTax: number;
   paymentFee: number;
   shippingCost: number;
   cac: number;
   returnLoss: number;
+  /** Ingreso neto menos costo del producto. */
+  grossProfit: number;
+  /** Margen bruto sobre el ingreso neto de IVA. */
+  grossMargin: number;
+  /** Lo que queda para comprar tráfico, antes del CAC. */
+  contribution: number;
   netProfit: number;
   netMargin: number;
-  /** Múltiplo precio/costo. Regla de oro del sector: >= 3x. */
+  /** Múltiplo ingreso neto / costo. Regla de oro del sector: >= 3x. */
   markup: number;
   /** ROAS mínimo para no perder plata, dado el margen de contribución. */
   breakEvenRoas: number;
@@ -94,32 +143,44 @@ export function unitEconomics(
   assumptions: CostAssumptions = DEFAULT_ASSUMPTIONS,
 ): UnitEconomics {
   const { price, cost, currency } = pricing;
-  const grossProfit = price - cost;
+
+  // El precio mostrado lleva el IVA adentro: se cobra pero no es ingreso.
+  const netRevenue = price / (1 + assumptions.salesTaxRate);
+  const salesTax = price - netRevenue;
+
+  // La pasarela y el impuesto a los ingresos brutos se calculan sobre el total
+  // que pasa por la caja, IVA incluido.
   const paymentFee = price * assumptions.paymentFeeRate;
+  const grossReceiptsTax = price * assumptions.grossReceiptsTaxRate;
 
   // Una devolución pierde el costo del producto y el envío; el fee de la
   // pasarela normalmente se reintegra, así que no se cuenta acá.
   const returnLoss = assumptions.returnRate * (cost + assumptions.shippingCost);
 
-  const netProfit =
-    grossProfit - paymentFee - assumptions.shippingCost - assumptions.cac - returnLoss;
-
-  // Margen de contribución antes de publicidad: lo que queda para comprar tráfico.
-  const contribution = grossProfit - paymentFee - assumptions.shippingCost - returnLoss;
+  const grossProfit = netRevenue - cost;
+  const contribution =
+    grossProfit - paymentFee - grossReceiptsTax - assumptions.shippingCost - returnLoss;
+  const netProfit = contribution - assumptions.cac;
 
   return {
-    price,
-    cost,
     currency,
-    grossProfit,
-    grossMargin: grossProfit / price,
+    price,
+    netRevenue,
+    cost,
+    salesTax,
+    grossReceiptsTax,
     paymentFee,
     shippingCost: assumptions.shippingCost,
     cac: assumptions.cac,
     returnLoss,
+    grossProfit,
+    grossMargin: grossProfit / netRevenue,
+    contribution,
     netProfit,
-    netMargin: netProfit / price,
-    markup: cost > 0 ? price / cost : Infinity,
+    netMargin: netProfit / netRevenue,
+    markup: cost > 0 ? netRevenue / cost : Infinity,
+    // El ROAS se mide contra lo que reporta la plataforma de anuncios, que es
+    // el total del checkout con IVA, no el ingreso neto.
     breakEvenRoas: contribution > 0 ? price / contribution : Infinity,
   };
 }
